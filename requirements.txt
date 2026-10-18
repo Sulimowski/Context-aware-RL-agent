@@ -1,0 +1,3 @@
+mujoco>=3.2
+numpy>=1.24
+glfw>=2.6        # used directly by gpu_check.py (also pulled in by mujoco)

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Third-party robot models (clone separately, see README)
+openarm_mujoco/
+
+# MuJoCo / OS artifacts
+MUJOCO_LOG.TXT
+.DS_Store
+Thumbs.db

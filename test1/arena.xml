@@ -1,0 +1,85 @@
+<!--
+test1: the simplest testbed for trying out our RL model.
+
+The agent IS the CUBE. It slides across a flat field driven by two forces (X and Y);
+a curb (4 walls) runs along the perimeter and keeps the cube inside the field.
+Task (the reward is defined in the Python wrapper): bring the cube to the requested edge.
+
+Field: inner square 0.8 x 0.8 m (half = 0.4).
+Cube: 5 cm, planar slide-x / slide-y joints (cannot tip over, lives in the plane).
+Actions: motor fx, fy  (ctrl in [-1, 1]).
+-->
+<mujoco model="test1_cube_arena">
+  <option timestep="0.005" gravity="0 0 -9.81"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.35 0.35 0.35" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="90" elevation="-40"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0"
+             width="512" height="512"/>
+    <texture type="2d" name="grid" builtin="checker" mark="edge"
+             rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8"
+             width="300" height="300"/>
+    <material name="grid" texture="grid" texuniform="true" texrepeat="8 8"
+              reflectance="0.15"/>
+    <material name="wall" rgba="0.35 0.35 0.38 1"/>
+    <material name="cube" rgba="0.85 0.33 0.10 1"/>
+    <material name="cube2" rgba="0.20 0.50 0.90 1"/>
+  </asset>
+
+  <default>
+    <default class="wall">
+      <geom type="box" material="wall" contype="1" conaffinity="1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 2" dir="0 0 -1" directional="true"/>
+
+    <geom name="floor" type="plane" size="0 0 0.05" material="grid"/>
+
+    <!-- top-down camera: a convenient view of the whole field -->
+    <camera name="top" pos="0 0 1.6" xyaxes="1 0 0  0 1 0"/>
+
+    <!-- curb: 4 walls, inner face at ±0.4, 6 cm tall -->
+    <geom class="wall" name="wall_px" pos=" 0.41  0     0.03" size="0.01 0.42 0.03"/>
+    <geom class="wall" name="wall_nx" pos="-0.41  0     0.03" size="0.01 0.42 0.03"/>
+    <geom class="wall" name="wall_py" pos=" 0     0.41  0.03" size="0.42 0.01 0.03"/>
+    <geom class="wall" name="wall_ny" pos=" 0    -0.41  0.03" size="0.42 0.01 0.03"/>
+
+    <!-- target: semi-transparent pad (its position is changed from Python) -->
+    <site name="target" type="box" size="0.04 0.04 0.001" pos="0.35 0 0.001"
+          rgba="0.1 0.8 0.2 0.45"/>
+
+    <!-- corner markers (LLM frame: +x right, +y forward/up) -->
+    <site name="RIGHT_UP"   pos=" 0.35  0.35 0.03" type="sphere" size="0.02" rgba="1.0 0.5 0.0 1"/>
+    <site name="LEFT_UP"    pos="-0.35  0.35 0.03" type="sphere" size="0.02" rgba="0.2 0.7 1.0 1"/>
+    <site name="LEFT_DOWN"  pos="-0.35 -0.35 0.03" type="sphere" size="0.02" rgba="0.7 0.7 0.7 1"/>
+    <site name="RIGHT_DOWN" pos=" 0.35 -0.35 0.03" type="sphere" size="0.02" rgba="0.9 0.2 0.5 1"/>
+
+    <!-- agent cube (orange): two planar joints + one motor per joint -->
+    <body name="cube" pos="0 0 0.025">
+      <joint name="cube_x" type="slide" axis="1 0 0" damping="5"/>
+      <joint name="cube_y" type="slide" axis="0 1 0" damping="5"/>
+      <geom name="cube" type="box" size="0.025 0.025 0.025" material="cube"
+            mass="0.2" condim="3" friction="0.6 0.005 0.0001"/>
+    </body>
+
+    <!-- second cube (blue): a passive, pushable object (no motors) -->
+    <body name="cube2" pos="0.15 0.20 0.025">
+      <joint name="cube2_x" type="slide" axis="1 0 0" damping="5"/>
+      <joint name="cube2_y" type="slide" axis="0 1 0" damping="5"/>
+      <geom name="cube2" type="box" size="0.025 0.025 0.025" material="cube2"
+            mass="0.2" condim="3" friction="0.6 0.005 0.0001"/>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="fx" joint="cube_x" gear="3" ctrlrange="-1 1"/>
+    <motor name="fy" joint="cube_y" gear="3" ctrlrange="-1 1"/>
+  </actuator>
+</mujoco>
